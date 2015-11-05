@@ -69,7 +69,7 @@ namespace de.alivedevil
             else if (node is ObjectNode)
             {
                 Type graphType = Type.GetType(token["$type"].Value<string>());
-                object graph = graphType.GetConstructor(Type.EmptyTypes).Invoke(null);
+                object graph = Activator.CreateInstance(graphType);
                 if (node is ReferenceObjectNode)
                     IdObjectLookup[ObjectIdLookup[graph] = ((ReferenceObjectNode)node).Id = token["$id"].Value<int>()] = graph;
                 ((ObjectNode)node).Reference = graph;
@@ -151,7 +151,7 @@ namespace de.alivedevil
                     IdObjectLookup[ObjectIdLookup[graph] = ((ReferenceObjectNode)node).Id = GetId()] = graph;
                 ((ObjectNode)node).Reference = graph;
 
-                PropertyInfo[] properties = graphType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty);
+                PropertyInfo[] properties = graphType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetField | BindingFlags.SetField | BindingFlags.GetProperty);
                 for (int i = 0; i < properties.Length; i++)
                 {
                     PropertyInfo propertyInfo = properties[i];

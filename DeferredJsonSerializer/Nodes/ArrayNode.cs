@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
 namespace de.alivedevil.Nodes
@@ -14,6 +15,15 @@ namespace de.alivedevil.Nodes
             {
                 Nodes[i].WriteOut(serializer);
                 array.Add(Nodes[i].Token);
+            }
+        }
+
+        public override void ReadOut(DeferredJsonSerializer serializer)
+        {
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                Nodes[i].ReadOut(serializer);
+                ((ArrayList)Reference).Add(Nodes[i].Reference);
             }
         }
     }
