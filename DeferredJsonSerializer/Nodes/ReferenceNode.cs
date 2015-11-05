@@ -8,14 +8,14 @@ namespace de.alivedevil.Nodes
 {
     public class ReferenceNode : Node
     {
-        public object Reference { get; set; }
-
-        public override void WriteOut(DeferredJsonSerializer serializer, JTokenWriter writer)
+        public override void WriteOut(DeferredJsonSerializer serializer)
         {
-            writer.WriteStartObject();
-            writer.WritePropertyName("$ref");
-            writer.WriteValue(serializer.ObjectIdLookup[Reference]);
-            writer.WriteEndObject();
+            ((JObject)Token)["$ref"] = serializer.ObjectIdLookup[Reference];
+        }
+
+        public override void ReadOut(DeferredJsonSerializer serializer)
+        {
+            Reference = serializer.IdObjectLookup[((JObject)Token)["$ref"].Value<int>()];
         }
     }
 }

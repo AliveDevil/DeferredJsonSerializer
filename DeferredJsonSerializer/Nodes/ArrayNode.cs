@@ -7,14 +7,14 @@ namespace de.alivedevil.Nodes
     {
         public List<Node> Nodes { get; } = new List<Node>();
 
-        public override void WriteOut(DeferredJsonSerializer serializer, JTokenWriter writer)
+        public override void WriteOut(DeferredJsonSerializer serializer)
         {
-            writer.WriteStartArray();
+            JArray array = (JArray)Token;
             for (int i = 0; i < Nodes.Count; i++)
             {
-                Nodes[i].WriteOut(serializer, writer);
+                Nodes[i].WriteOut(serializer);
+                array.Add(Nodes[i].Token);
             }
-            writer.WriteEndArray();
         }
     }
 }

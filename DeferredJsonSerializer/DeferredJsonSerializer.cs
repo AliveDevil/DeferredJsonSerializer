@@ -22,9 +22,12 @@ namespace de.alivedevil
         {
             using (var streamReader = new StreamReader(stream))
             using (var jsonReader = new JsonTextReader(streamReader))
-            using (var jtokenReader = new JTokenReader(JToken.ReadFrom(jsonReader)))
             {
-                return default(T);
+                JToken token = JToken.ReadFrom(jsonReader);
+                Node startNode = FindNode(token);
+                Deserialize(startNode, token);
+                startNode.ReadOut(this);
+                return (T)((ObjectNode)startNode).Reference;
             }
         }
 
@@ -34,11 +37,11 @@ namespace de.alivedevil
             Serialize(startNode, typeof(T), graph, true);
             using (JTokenWriter writer = new JTokenWriter())
             {
-                startNode.WriteOut(this, writer);
+                startNode.WriteOut(this);
 
                 using (var streamWriter = new StreamWriter(stream))
                 using (var jsonWriter = new JsonTextWriter(streamWriter) { Formatting = Formatting.Indented })
-                    writer.Token.WriteTo(jsonWriter);
+                    startNode.Token.WriteTo(jsonWriter);
             }
         }
 
@@ -50,15 +53,60 @@ namespace de.alivedevil
             return null;
         }
 
+        private void Deserialize(Node node, JToken token)
+        {
+            if (node is ArrayNode)
+            {
+                ((ArrayNode)node).Reference = new ArrayList();
+                foreach (var item in (JArray)token)
+                {
+                    Node arrayNode = FindNode(item);
+                    Deserialize(arrayNode, item);
+                    ((ArrayNode)node).Nodes.Add(arrayNode);
+                    ((ArrayList)((ArrayNode)node).Reference).Add(arrayNode.Reference);
+                }
+            }
+            else if (node is ObjectNode)
+            {
+                Type graphType = Type.GetType(token["$type"].Value<string>());
+                object graph = graphType.GetConstructor(Type.EmptyTypes).Invoke(null);
+                if (node is ReferenceObjectNode)
+                    IdObjectLookup[ObjectIdLookup[graph] = ((ReferenceObjectNode)node).Id = token["$id"].Value<int>()] = graph;
+                ((ObjectNode)node).Reference = graph;
+
+                foreach (var item in (JObject)token)
+                {
+                    if (item.Key == "$type" || item.Key == "$id") continue;
+
+                    PropertyNode property = new PropertyNode() { Name = item.Key, Token = item.Value };
+                    property.Value = FindNode(item.Value);
+                    ((ObjectNode)node).Nodes.Add(property);
+                    Deserialize(property.Value, property.Token);
+                }
+            }
+        }
+
+        private Node FindNode(JToken token)
+        {
+            if (token is JValue) return new ValueNode() { Token = token };
+            else if (token is JArray) return new ArrayNode() { Token = token };
+            else if (token is JObject)
+                if (token["$type"] != null)
+                    if (token["$id"] != null) return new ReferenceObjectNode() { Token = token };
+                    else return new ObjectNode() { Token = token };
+                else if (token["$ref"] != null) return new ReferenceNode() { Token = token };
+            return null;
+        }
+
         private Node FindNode(Type type)
         {
-            if (type == typeof(string) || type == typeof(char)) return new ValueNode();
-            else if (type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) || type == typeof(short) || type == typeof(int) || type == typeof(long)) return new ValueNode();
-            else if (type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan)) return new ValueNode();
-            else if (type.IsArray || GetEnumerableType(type) != null) return new ArrayNode();
+            if (type == typeof(string) || type == typeof(char)) return new ValueNode() { Token = JValue.CreateUndefined() };
+            else if (type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) || type == typeof(short) || type == typeof(int) || type == typeof(long)) return new ValueNode() { Token = JValue.CreateUndefined() };
+            else if (type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan)) return new ValueNode() { Token = JValue.CreateUndefined() };
+            else if (type.IsArray || GetEnumerableType(type) != null) return new ArrayNode() { Token = new JArray() };
             else if (type.IsClass || type.IsValueType)
-                if (type.HasAttribute<ReferenceAttribute>()) return new ReferenceObjectNode();
-                else return new ObjectNode();
+                if (type.HasAttribute<ReferenceAttribute>()) return new ReferenceObjectNode() { Token = new JObject() };
+                else return new ObjectNode() { Token = new JObject() };
             else return null;
         }
 
@@ -71,7 +119,7 @@ namespace de.alivedevil
         {
             if (node is ValueNode)
             {
-                ((ValueNode)node).Value = graph;
+                ((ValueNode)node).Reference = graph;
             }
             else if (node is ArrayNode)
             {
@@ -100,7 +148,7 @@ namespace de.alivedevil
             else if (node is ObjectNode)
             {
                 if (node is ReferenceObjectNode)
-                    ObjectIdLookup[graph] = ((ReferenceObjectNode)node).Id = GetId();
+                    IdObjectLookup[ObjectIdLookup[graph] = ((ReferenceObjectNode)node).Id = GetId()] = graph;
                 ((ObjectNode)node).Reference = graph;
 
                 PropertyInfo[] properties = graphType.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.SetProperty);
@@ -115,7 +163,7 @@ namespace de.alivedevil
                     {
                         if (propertyType.HasAttribute<ReferenceAttribute>())
                         {
-                            property.Value = new ReferenceNode();
+                            property.Value = new ReferenceNode() { Token = new JObject() };
                             keepReference = true;
                         }
                         else

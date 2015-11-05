@@ -7,18 +7,23 @@ namespace de.alivedevil.Nodes
     {
         public List<PropertyNode> Nodes { get; } = new List<PropertyNode>();
 
-        public object Reference { get; set; }
-
-        public override void WriteOut(DeferredJsonSerializer serializer, JTokenWriter writer)
+        public override void WriteOut(DeferredJsonSerializer serializer)
         {
-            writer.WriteStartObject();
-            writer.WritePropertyName("$type");
-            writer.WriteValue($"{Reference.GetType().FullName}, {Reference.GetType().Assembly.GetName().Name}");
+            JObject jObject = (JObject)Token;
+            jObject["$type"] = $"{Reference.GetType().FullName}, {Reference.GetType().Assembly.GetName().Name}";
             for (int i = 0; i < Nodes.Count; i++)
             {
-                Nodes[i].WriteOut(serializer, writer);
+                Nodes[i].Value.WriteOut(serializer);
+                jObject[Nodes[i].Name] = Nodes[i].Value.Token;
             }
-            writer.WriteEndObject();
+        }
+
+        public override void ReadOut(DeferredJsonSerializer serializer)
+        {
+            foreach (var property in Nodes)
+            {
+
+            }
         }
     }
 }

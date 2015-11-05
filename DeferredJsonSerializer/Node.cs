@@ -6,11 +6,13 @@ namespace de.alivedevil
     {
         public JToken Token { get; set; }
 
-        public virtual void ReadOut(DeferredJsonSerializer serializer, JTokenReader reader)
+        public object Reference { get; set; }
+
+        public virtual void WriteOut(DeferredJsonSerializer serializer)
         {
         }
 
-        public virtual void WriteOut(DeferredJsonSerializer serializer, JTokenWriter writer)
+        public virtual void ReadOut(DeferredJsonSerializer serializer)
         {
         }
     }
