@@ -9,17 +9,11 @@ namespace de.alivedevil.Nodes
 {
     public class ObjectNode : Node
     {
-        public List<PropertyNode> Nodes { get; } = new List<PropertyNode>();
+        private List<PropertyNode> nodes = new List<PropertyNode>();
 
-        public override void WriteOut(DeferredJsonSerializer serializer)
+        public List<PropertyNode> Nodes
         {
-            JObject jObject = (JObject)Token;
-            jObject["$type"] = $"{Reference.GetType().FullName}, {Reference.GetType().Assembly.GetName().Name}";
-            for (int i = 0; i < Nodes.Count; i++)
-            {
-                Nodes[i].Value.WriteOut(serializer);
-                jObject[Nodes[i].Name] = Nodes[i].Value.Token;
-            }
+            get { return nodes; }
         }
 
         public override void ReadOut(DeferredJsonSerializer serializer)
@@ -80,6 +74,17 @@ namespace de.alivedevil.Nodes
                     else if (fieldInfo != null)
                         fieldInfo.SetValue(Reference, property.Value.Reference);
                 }
+            }
+        }
+
+        public override void WriteOut(DeferredJsonSerializer serializer)
+        {
+            JObject jObject = (JObject)Token;
+            jObject["$type"] = string.Format("{0}, {1}", Reference.GetType().FullName, Reference.GetType().Assembly.GetName().Name);
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                Nodes[i].Value.WriteOut(serializer);
+                jObject[Nodes[i].Name] = Nodes[i].Value.Token;
             }
         }
     }

@@ -6,16 +6,11 @@ namespace de.alivedevil.Nodes
 {
     public class ArrayNode : Node
     {
-        public List<Node> Nodes { get; } = new List<Node>();
+        private List<Node> nodes = new List<Node>();
 
-        public override void WriteOut(DeferredJsonSerializer serializer)
+        public List<Node> Nodes
         {
-            JArray array = (JArray)Token;
-            for (int i = 0; i < Nodes.Count; i++)
-            {
-                Nodes[i].WriteOut(serializer);
-                array.Add(Nodes[i].Token);
-            }
+            get { return nodes; }
         }
 
         public override void ReadOut(DeferredJsonSerializer serializer)
@@ -24,6 +19,16 @@ namespace de.alivedevil.Nodes
             {
                 Nodes[i].ReadOut(serializer);
                 ((ArrayList)Reference).Add(Nodes[i].Reference);
+            }
+        }
+
+        public override void WriteOut(DeferredJsonSerializer serializer)
+        {
+            JArray array = (JArray)Token;
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                Nodes[i].WriteOut(serializer);
+                array.Add(Nodes[i].Token);
             }
         }
     }
