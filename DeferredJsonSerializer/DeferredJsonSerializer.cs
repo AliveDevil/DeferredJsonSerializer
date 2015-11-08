@@ -16,11 +16,12 @@ namespace de.alivedevil
 
         private Dictionary<int, object> idObjectLookup = new Dictionary<int, object>();
 
+        private Dictionary<object, int> objectIdLookup = new Dictionary<object, int>();
+
         internal Dictionary<int, object> IdObjectLookup
         {
             get { return idObjectLookup; }
         }
-        private Dictionary<object, int> objectIdLookup = new Dictionary<object, int>();
 
         internal Dictionary<object, int> ObjectIdLookup
         {

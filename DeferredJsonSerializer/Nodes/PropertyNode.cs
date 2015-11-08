@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-
-namespace de.alivedevil.Nodes
+﻿namespace de.alivedevil.Nodes
 {
     public class PropertyNode : Node
     {

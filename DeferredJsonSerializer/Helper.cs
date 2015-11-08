@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace de.alivedevil
 {
-    static class Helper
+    internal static class Helper
     {
         public static bool HasAttribute<T>(this ICustomAttributeProvider provider) where T : Attribute
         {
