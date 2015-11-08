@@ -16,20 +16,13 @@ namespace de.alivedevil.Nodes
         public override void ReadOut(DeferredJsonSerializer serializer)
         {
             for (int i = 0; i < Nodes.Count; i++)
-            {
                 Nodes[i].ReadOut(serializer);
-                ((ArrayList)Reference).Add(Nodes[i].Reference);
-            }
         }
 
         public override void WriteOut(DeferredJsonSerializer serializer)
         {
-            JArray array = (JArray)Token;
             for (int i = 0; i < Nodes.Count; i++)
-            {
                 Nodes[i].WriteOut(serializer);
-                array.Add(Nodes[i].Token);
-            }
         }
     }
 }

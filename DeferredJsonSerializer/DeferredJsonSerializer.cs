@@ -44,14 +44,11 @@ namespace de.alivedevil
         {
             Node startNode = FindNode(typeof(T));
             Serialize(startNode, typeof(T), graph, true);
-            using (JTokenWriter writer = new JTokenWriter())
-            {
-                startNode.WriteOut(this);
+            startNode.WriteOut(this);
 
-                using (var streamWriter = new StreamWriter(stream))
-                using (var jsonWriter = new JsonTextWriter(streamWriter) { Formatting = Formatting.Indented })
-                    startNode.Token.WriteTo(jsonWriter);
-            }
+            using (var streamWriter = new StreamWriter(stream))
+            using (var jsonWriter = new JsonTextWriter(streamWriter) { Formatting = Formatting.Indented })
+                startNode.Token.WriteTo(jsonWriter);
         }
 
         private static Type GetEnumerableType(Type type)
@@ -149,6 +146,7 @@ namespace de.alivedevil
                     }
                     Serialize(itemNode, item.GetType(), item, keepReference);
                     ((ArrayNode)node).Nodes.Add(itemNode);
+                    ((JArray)((ArrayNode)node).Token).Add(itemNode.Token);
                 }
             }
             else if (node is ReferenceNode)
