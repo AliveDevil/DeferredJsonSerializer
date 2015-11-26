@@ -160,13 +160,12 @@ namespace de.alivedevil
                     IdObjectLookup[ObjectIdLookup[graph] = ((ReferenceObjectNode)node).Id = GetId()] = graph;
                 ((ObjectNode)node).Reference = graph;
 
-                MemberInfo[] member = graphType.GetMembers(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetField | BindingFlags.SetField | BindingFlags.GetProperty);
-                for (int i = 0; i < member.Length; i++)
+                IEnumerable<MemberInfo> member = graphType.Member();
+                foreach (var item in member)
                 {
-                    PropertyInfo propertyInfo = member[i] as PropertyInfo;
-                    FieldInfo fieldInfo = member[i] as FieldInfo;
-                    if (propertyInfo != null)
+                    if (item is PropertyInfo)
                     {
+                        PropertyInfo propertyInfo = (PropertyInfo)item;
                         if (propertyInfo.GetIndexParameters() != null && propertyInfo.GetIndexParameters().Length > 0) continue;
                         Type propertyType = propertyInfo.PropertyType;
                         PropertyNode property = new PropertyNode() { Name = propertyInfo.Name };
@@ -195,8 +194,9 @@ namespace de.alivedevil
                         Serialize(property.Value, propertyType, propertyInfo.GetValue(graph, null), keepReference);
                         ((ObjectNode)node).Nodes.Add(property);
                     }
-                    else if (fieldInfo != null)
+                    else if (item is FieldInfo)
                     {
+                        FieldInfo fieldInfo = (FieldInfo)item;
                         Type fieldType = fieldInfo.FieldType;
                         PropertyNode property = new PropertyNode() { Name = fieldInfo.Name };
                         bool keepReference = false;
