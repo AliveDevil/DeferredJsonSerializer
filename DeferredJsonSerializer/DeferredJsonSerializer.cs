@@ -108,6 +108,7 @@ namespace de.alivedevil
             else if (type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) || type == typeof(short) || type == typeof(int) || type == typeof(long)) return new ValueNode() { Token = JValue.CreateUndefined() };
             else if (type == typeof(float) || type == typeof(double)) return new ValueNode() { Token = JValue.CreateUndefined() };
             else if (type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan)) return new ValueNode() { Token = JValue.CreateUndefined() };
+            else if (type == typeof(bool)) return new ValueNode() { Token = JValue.CreateUndefined() };
             else if (type.IsArray || GetEnumerableType(type) != null) return new ArrayNode() { Token = new JArray() };
             else if (type.IsClass || type.IsValueType)
                 if (type.HasAttribute<ReferenceAttribute>()) return new ReferenceObjectNode() { Token = new JObject() };
