@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 
 namespace de.alivedevil.Nodes
 {
@@ -14,7 +15,10 @@ namespace de.alivedevil.Nodes
         public override void ReadOut(DeferredJsonSerializer serializer)
         {
             for (int i = 0; i < Nodes.Count; i++)
+            {
                 Nodes[i].ReadOut(serializer);
+                ((ArrayList)Reference).Add(Nodes[i].Reference);
+            }
         }
 
         public override void WriteOut(DeferredJsonSerializer serializer)

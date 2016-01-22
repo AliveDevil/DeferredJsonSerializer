@@ -13,9 +13,7 @@ namespace de.alivedevil
     public class DeferredJsonSerializer
     {
         private int currentId = 0;
-
         private Dictionary<int, object> idObjectLookup = new Dictionary<int, object>();
-
         private Dictionary<object, int> objectIdLookup = new Dictionary<object, int>();
 
         internal Dictionary<int, object> IdObjectLookup
@@ -48,7 +46,7 @@ namespace de.alivedevil
             startNode.WriteOut(this);
 
             using (var streamWriter = new StreamWriter(stream))
-            using (var jsonWriter = new JsonTextWriter(streamWriter) { Formatting = Formatting.Indented })
+            using (var jsonWriter = new JsonTextWriter(streamWriter) { Formatting = Formatting.None })
                 startNode.Token.WriteTo(jsonWriter);
         }
 
@@ -70,7 +68,6 @@ namespace de.alivedevil
                     Node arrayNode = FindNode(item);
                     Deserialize(arrayNode, item);
                     ((ArrayNode)node).Nodes.Add(arrayNode);
-                    ((ArrayList)((ArrayNode)node).Reference).Add(arrayNode.Reference);
                 }
             }
             else if (node is ObjectNode)
@@ -134,11 +131,11 @@ namespace de.alivedevil
                 IEnumerable ienumerable = (IEnumerable)graph;
                 foreach (var item in ienumerable)
                 {
-                    bool keepReference = false;
                     Node itemNode;
+                    bool keepReference = false;
                     if (keepReferences && item.GetType().HasAttribute<ReferenceAttribute>())
                     {
-                        itemNode = new ReferenceNode();
+                        itemNode = new ReferenceNode() { Token = new JObject() };
                         keepReference = true;
                     }
                     else
@@ -160,17 +157,27 @@ namespace de.alivedevil
                     IdObjectLookup[ObjectIdLookup[graph] = ((ReferenceObjectNode)node).Id = GetId()] = graph;
                 ((ObjectNode)node).Reference = graph;
 
-                IEnumerable<MemberInfo> member = graphType.Member();
-                foreach (var item in member)
+                var properties = graphType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                for (int i = 0; i < properties.Length; i++)
                 {
-                    if (item is PropertyInfo)
-                    {
-                        PropertyInfo propertyInfo = (PropertyInfo)item;
-                        if (propertyInfo.GetIndexParameters() != null && propertyInfo.GetIndexParameters().Length > 0) continue;
-                        Type propertyType = propertyInfo.PropertyType;
-                        PropertyNode property = new PropertyNode() { Name = propertyInfo.Name };
-                        bool keepReference = false;
+                    bool keepReference = false;
+                    PropertyInfo propertyInfo = properties[i];
 
+                    if (propertyInfo.GetIndexParameters() != null && propertyInfo.GetIndexParameters().Length > 0)
+                    {
+                        continue;
+                    }
+
+                    var value = propertyInfo.GetValue(graph, null);
+                    Type propertyType = propertyInfo.PropertyType;
+                    PropertyNode property = new PropertyNode() { Name = propertyInfo.Name };
+
+                    if (value == null)
+                    {
+                        property.Value = new ValueNode();
+                    }
+                    else
+                    {
                         if (propertyInfo.HasAttribute<KeepReferenceAttribute>())
                         {
                             if (propertyType.HasAttribute<ReferenceAttribute>())
@@ -190,40 +197,51 @@ namespace de.alivedevil
                             property.Value = FindNode(propertyType);
                         }
                         if (!(property.Value is ArrayNode) && !propertyInfo.CanWrite) continue;
-
-                        Serialize(property.Value, propertyType, propertyInfo.GetValue(graph, null), keepReference);
-                        ((ObjectNode)node).Nodes.Add(property);
                     }
-                    else if (item is FieldInfo)
-                    {
-                        FieldInfo fieldInfo = (FieldInfo)item;
-                        Type fieldType = fieldInfo.FieldType;
-                        PropertyNode property = new PropertyNode() { Name = fieldInfo.Name };
-                        bool keepReference = false;
 
+                    Serialize(property.Value, propertyType, value, keepReference);
+                    ((ObjectNode)node).Nodes.Add(property);
+                }
+
+                var fields = graphType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+                for (int i = 0; i < fields.Length; i++)
+                {
+                    bool keepReference = false;
+                    FieldInfo fieldInfo = fields[i];
+
+                    var value = fieldInfo.GetValue(graph);
+                    Type fieldType = fieldInfo.FieldType;
+                    PropertyNode field = new PropertyNode() { Name = fieldInfo.Name };
+
+                    if (value == null)
+                    {
+                        field.Value = new ValueNode();
+                    }
+                    else
+                    {
                         if (fieldType.HasAttribute<KeepReferenceAttribute>())
                         {
                             if (fieldType.HasAttribute<ReferenceAttribute>())
                             {
-                                property.Value = new ReferenceNode() { Token = new JObject() };
+                                field.Value = new ReferenceNode() { Token = new JObject() };
                                 keepReference = true;
                             }
                             else
                             {
-                                property.Value = FindNode(fieldType);
+                                field.Value = FindNode(fieldType);
                                 Type enumerableType = GetEnumerableType(fieldType);
                                 keepReference = enumerableType != null && enumerableType.HasAttribute<ReferenceAttribute>();
                             }
                         }
                         else
                         {
-                            property.Value = FindNode(fieldType);
+                            field.Value = FindNode(fieldType);
                         }
-                        if (!(property.Value is ArrayNode) && fieldInfo.IsInitOnly) continue;
-
-                        Serialize(property.Value, fieldType, fieldInfo.GetValue(graph), keepReference);
-                        ((ObjectNode)node).Nodes.Add(property);
+                        if (!(field.Value is ArrayNode) && fieldInfo.IsInitOnly) continue;
                     }
+
+                    Serialize(field.Value, fieldType, value, keepReference);
+                    ((ObjectNode)node).Nodes.Add(field);
                 }
             }
         }
