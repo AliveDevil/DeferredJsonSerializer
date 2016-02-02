@@ -18,12 +18,18 @@ namespace de.alivedevil
 
         internal Dictionary<int, object> IdObjectLookup
         {
-            get { return idObjectLookup; }
+            get
+            {
+                return idObjectLookup;
+            }
         }
 
         internal Dictionary<object, int> ObjectIdLookup
         {
-            get { return objectIdLookup; }
+            get
+            {
+                return objectIdLookup;
+            }
         }
 
         public T Deserialize<T>(Stream stream) where T : new()
@@ -80,7 +86,8 @@ namespace de.alivedevil
 
                 foreach (var item in (JObject)token)
                 {
-                    if (item.Key == "$type" || item.Key == "$id") continue;
+                    if (item.Key == "$type" || item.Key == "$id")
+                        continue;
 
                     PropertyNode property = new PropertyNode() { Name = item.Key, Token = item.Value };
                     property.Value = FindNode(item.Value);
@@ -92,28 +99,42 @@ namespace de.alivedevil
 
         private Node FindNode(JToken token)
         {
-            if (token is JValue) return new ValueNode() { Token = token };
-            else if (token is JArray) return new ArrayNode() { Token = token };
+            if (token is JValue)
+                return new ValueNode() { Token = token };
+            else if (token is JArray)
+                return new ArrayNode() { Token = token };
             else if (token is JObject)
                 if (token["$type"] != null)
-                    if (token["$id"] != null) return new ReferenceObjectNode() { Token = token };
-                    else return new ObjectNode() { Token = token };
-                else if (token["$ref"] != null) return new ReferenceNode() { Token = token };
+                    if (token["$id"] != null)
+                        return new ReferenceObjectNode() { Token = token };
+                    else
+                        return new ObjectNode() { Token = token };
+                else if (token["$ref"] != null)
+                    return new ReferenceNode() { Token = token };
             return null;
         }
 
         private Node FindNode(Type type)
         {
-            if (type == typeof(string) || type == typeof(char)) return new ValueNode() { Token = JValue.CreateUndefined() };
-            else if (type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) || type == typeof(short) || type == typeof(int) || type == typeof(long)) return new ValueNode() { Token = JValue.CreateUndefined() };
-            else if (type == typeof(float) || type == typeof(double)) return new ValueNode() { Token = JValue.CreateUndefined() };
-            else if (type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan)) return new ValueNode() { Token = JValue.CreateUndefined() };
-            else if (type == typeof(bool)) return new ValueNode() { Token = JValue.CreateUndefined() };
-            else if (type.IsArray || GetEnumerableType(type) != null) return new ArrayNode() { Token = new JArray() };
+            if (type == typeof(string) || type == typeof(char))
+                return new ValueNode() { Token = JValue.CreateUndefined() };
+            else if (type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong) || type == typeof(short) || type == typeof(int) || type == typeof(long))
+                return new ValueNode() { Token = JValue.CreateUndefined() };
+            else if (type == typeof(float) || type == typeof(double))
+                return new ValueNode() { Token = JValue.CreateUndefined() };
+            else if (type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan))
+                return new ValueNode() { Token = JValue.CreateUndefined() };
+            else if (type == typeof(bool))
+                return new ValueNode() { Token = JValue.CreateUndefined() };
+            else if (type.IsArray || GetEnumerableType(type) != null)
+                return new ArrayNode() { Token = new JArray() };
             else if (type.IsClass || type.IsValueType)
-                if (type.HasAttribute<ReferenceAttribute>()) return new ReferenceObjectNode() { Token = new JObject() };
-                else return new ObjectNode() { Token = new JObject() };
-            else return null;
+                if (type.HasAttribute<ReferenceAttribute>())
+                    return new ReferenceObjectNode() { Token = new JObject() };
+                else
+                    return new ObjectNode() { Token = new JObject() };
+            else
+                return null;
         }
 
         private int GetId()
@@ -175,30 +196,28 @@ namespace de.alivedevil
 
                     if (value == null)
                     {
-                        property.Value = new ValueNode();
+                        property.Value = new ValueNode() { Token = JValue.CreateNull() };
                     }
-                    else
+                    else if (propertyInfo.HasAttribute<KeepReferenceAttribute>())
                     {
-                        if (propertyInfo.HasAttribute<KeepReferenceAttribute>())
+                        if (propertyType.HasAttribute<ReferenceAttribute>())
                         {
-                            if (propertyType.HasAttribute<ReferenceAttribute>())
-                            {
-                                property.Value = new ReferenceNode() { Token = new JObject() };
-                                keepReference = true;
-                            }
-                            else
-                            {
-                                property.Value = FindNode(propertyType);
-                                Type enumerableType = GetEnumerableType(propertyType);
-                                keepReference = enumerableType != null && enumerableType.HasAttribute<ReferenceAttribute>();
-                            }
+                            property.Value = new ReferenceNode() { Token = new JObject() };
+                            keepReference = true;
                         }
                         else
                         {
                             property.Value = FindNode(propertyType);
+                            Type enumerableType = GetEnumerableType(propertyType);
+                            keepReference = enumerableType != null && enumerableType.HasAttribute<ReferenceAttribute>();
                         }
-                        if (!(property.Value is ArrayNode) && !propertyInfo.CanWrite) continue;
                     }
+                    else
+                    {
+                        property.Value = FindNode(propertyType);
+                    }
+                    if (!(property.Value is ArrayNode) && !propertyInfo.CanWrite)
+                        continue;
 
                     Serialize(property.Value, propertyType, value, keepReference);
                     ((ObjectNode)node).Nodes.Add(property);
@@ -216,30 +235,28 @@ namespace de.alivedevil
 
                     if (value == null)
                     {
-                        field.Value = new ValueNode();
+                        field.Value = new ValueNode() { Token = JValue.CreateNull() };
                     }
-                    else
+                    else if (fieldType.HasAttribute<KeepReferenceAttribute>())
                     {
-                        if (fieldType.HasAttribute<KeepReferenceAttribute>())
+                        if (fieldType.HasAttribute<ReferenceAttribute>())
                         {
-                            if (fieldType.HasAttribute<ReferenceAttribute>())
-                            {
-                                field.Value = new ReferenceNode() { Token = new JObject() };
-                                keepReference = true;
-                            }
-                            else
-                            {
-                                field.Value = FindNode(fieldType);
-                                Type enumerableType = GetEnumerableType(fieldType);
-                                keepReference = enumerableType != null && enumerableType.HasAttribute<ReferenceAttribute>();
-                            }
+                            field.Value = new ReferenceNode() { Token = new JObject() };
+                            keepReference = true;
                         }
                         else
                         {
                             field.Value = FindNode(fieldType);
+                            Type enumerableType = GetEnumerableType(fieldType);
+                            keepReference = enumerableType != null && enumerableType.HasAttribute<ReferenceAttribute>();
                         }
-                        if (!(field.Value is ArrayNode) && fieldInfo.IsInitOnly) continue;
                     }
+                    else
+                    {
+                        field.Value = FindNode(fieldType);
+                    }
+                    if (!(field.Value is ArrayNode) && fieldInfo.IsInitOnly)
+                        continue;
 
                     Serialize(field.Value, fieldType, value, keepReference);
                     ((ObjectNode)node).Nodes.Add(field);

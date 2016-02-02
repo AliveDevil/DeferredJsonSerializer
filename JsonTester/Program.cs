@@ -10,7 +10,6 @@ namespace JsonTester
     [Reference]
     public class Container
     {
-        [KeepReference]
         public List<Item> Items { get; set; } = new List<Item>();
     }
 
@@ -48,7 +47,7 @@ namespace JsonTester
 
     internal class Program
     {
-        const string json = "{\"$id\":0,\"$type\":\"JsonTester.Container, JsonTester\",\"Items\":[{\"$id\":1,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":{\"$type\":\"JsonTester.Depend, JsonTester\",\"Item\":{\"$ref\":1}},\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":2136749948,\"Y\":73797350}},{\"$id\":2,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":{\"$type\":\"JsonTester.Depend, JsonTester\",\"Item\":{\"$ref\":2}},\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":1379563029,\"Y\":139796753}},{\"$id\":3,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":{\"$type\":\"JsonTester.Depend, JsonTester\",\"Item\":{\"$ref\":3}},\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":2139544086,\"Y\":1129007368}},{\"$id\":4,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":{\"$type\":\"JsonTester.Depend, JsonTester\",\"Item\":{\"$ref\":4}},\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":830835170,\"Y\":1726835406}},{\"$id\":5,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":{\"$type\":\"JsonTester.Depend, JsonTester\",\"Item\":{\"$ref\":5}},\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":891816016,\"Y\":1727474472}}]}";
+        const string json = "{\"$id\":0,\"$type\":\"JsonTester.Container, JsonTester\",\"Items\":[{\"$id\":1,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":null,\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":1830198503,\"Y\":852804687}},{\"$id\":2,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":null,\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":309042397,\"Y\":290870476}},{\"$id\":3,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":null,\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":627759964,\"Y\":652807020}},{\"$id\":4,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":null,\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":835414054,\"Y\":715492023}},{\"$id\":5,\"$type\":\"JsonTester.Item, JsonTester\",\"Container\":{\"$ref\":0},\"Depend\":null,\"Test\":{\"$type\":\"JsonTester.Test, JsonTester\",\"X\":1514343870,\"Y\":2031198095}}]}";
 
         private static void Main(string[] args)
         {
@@ -60,7 +59,8 @@ namespace JsonTester
             //    {
             //        _.Test = new Test() { X = random.Next(), Y = random.Next() };
             //        _.Container = container;
-            //        _.Depend = new Depend() { Item = _ };
+            //        _.Depend = null;
+            //        //_.Depend = new Depend() { Item = _ };
             //    }));
             //}
             //DeferredJsonSerializer serializer = new DeferredJsonSerializer();
